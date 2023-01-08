@@ -1,7 +1,15 @@
 import { useState } from "react";
 import server from "./server";
+import * as secp from "ethereum-cryptography/secp256k1";
+import { keccak256 } from "ethereum-cryptography/keccak";
+import { utf8ToBytes, toHex } from "ethereum-cryptography/utils";
 
-function Transfer({ address, setBalance }) {
+function hashMessage(message) {
+  const messageBytes = utf8ToBytes(message);
+  return keccak256(messageBytes);
+}
+
+function Transfer({ publicKey, privateKey, address, setBalance }) {
   const [sendAmount, setSendAmount] = useState("");
   const [recipient, setRecipient] = useState("");
 
@@ -11,27 +19,39 @@ function Transfer({ address, setBalance }) {
     evt.preventDefault();
 
     try {
+      // sign message
+      const msgHash = hashMessage(
+        `${address} send $ ${sendAmount} to ${recipient}`
+      );
+      const signature = await secp.sign(msgHash, privateKey);
+      const sigHex = toHex(signature);
+
       const {
         data: { balance },
       } = await server.post(`send`, {
-        sender: address,
+        sender: {
+          address,
+          publicKey,
+        },
+        msgHash,
+        sigHex,
         amount: parseInt(sendAmount),
         recipient,
       });
       setBalance(balance);
     } catch (ex) {
-      alert(ex.response.data.message);
+      alert(ex);
     }
   }
 
   return (
-    <form className="container transfer" onSubmit={transfer}>
+    <form className='container transfer' onSubmit={transfer}>
       <h1>Send Transaction</h1>
 
       <label>
         Send Amount
         <input
-          placeholder="1, 2, 3..."
+          placeholder='1, 2, 3...'
           value={sendAmount}
           onChange={setValue(setSendAmount)}
         ></input>
@@ -40,13 +60,13 @@ function Transfer({ address, setBalance }) {
       <label>
         Recipient
         <input
-          placeholder="Type an address, for example: 0x2"
+          placeholder='Type an address, for example: 0x2'
           value={recipient}
           onChange={setValue(setRecipient)}
         ></input>
       </label>
 
-      <input type="submit" className="button" value="Transfer" />
+      <input type='submit' className='button' value='Transfer' />
     </form>
   );
 }
