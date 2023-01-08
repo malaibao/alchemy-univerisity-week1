@@ -29,7 +29,7 @@ The application should connect to the default server port (3042) automatically!
 
 _Hint_ - Use [nodemon](https://www.npmjs.com/package/nodemon) instead of `node` to automatically restart the server on any changes.
 
-### Screenshot
+### Preview
 
 IMPORTANT: This is a project to get familiar with encrpytion in cryptography. **PLEASE DO NOT** provide real private key.
 ![Screnshot](./screenshot/screenshot1.png)
